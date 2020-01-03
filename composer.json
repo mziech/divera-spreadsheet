@@ -1,0 +1,22 @@
+{
+    "name": "thw-ofrk/divera-spreadsheet",
+    "description": "Generate spreadsheets from Divera API",
+    "type": "project",
+    "require": {
+        "phpoffice/phpspreadsheet": "^1.10",
+        "apereo/phpcas": "^1.3",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "DiveraSpreadSheet\\": "lib/"
+        }
+    },
+    "license": "GPL3",
+    "authors": [
+        {
+            "name": "Marco Ziech",
+            "email": "marco@ziech.net"
+        }
+    ]
+}
