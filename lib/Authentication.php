@@ -98,7 +98,7 @@ class Authentication {
         phpCAS::setDebug();
         phpCAS::setVerbose(true);
         $url = parse_url(Config::get()->casUrl);
-        phpCAS::client(CAS_VERSION_3_0, $url['host'], $url['port'], $url['path']);
+        phpCAS::client(CAS_VERSION_3_0, $url['host'], $url['port'] !== null ? $url['port'] : 443, $url['path']);
         if ($url['scheme'] === 'http') {
             phpCAS::setNoCasServerValidation();
             phpCAS::setServerLoginURL(Config::get()->casUrl . "/login?service=" . phpCAS::getServiceURL());
