@@ -8,6 +8,8 @@ class Config {
 
     public $casUrl = '';
 
+    public $casServiceUrl = null;
+
     public $notAddressedBg = '#333333';
 
     public $responseTypes = [];

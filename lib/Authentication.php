@@ -104,6 +104,9 @@ class Authentication {
             phpCAS::setServerLoginURL(Config::get()->casUrl . "/login?service=" . phpCAS::getServiceURL());
             phpCAS::setServerServiceValidateURL(Config::get()->casUrl . "/p3/serviceValidate");
         }
+        if (Config::get()->casServiceUrl !== null) {
+            phpCAS::setFixedServiceURL(Config::get()->casServiceUrl);
+        }
         phpCAS::forceAuthentication();
         return new Authentication(phpCAS::getUser(), false);
     }
