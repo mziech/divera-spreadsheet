@@ -103,6 +103,8 @@ class Authentication {
             phpCAS::setNoCasServerValidation();
             phpCAS::setServerLoginURL(Config::get()->casUrl . "/login?service=" . phpCAS::getServiceURL());
             phpCAS::setServerServiceValidateURL(Config::get()->casUrl . "/p3/serviceValidate");
+        } else {
+            phpCAS::setCasServerCACert("/etc/ssl/certs/ca-certificates.crt");
         }
         if (Config::get()->casServiceUrl !== null) {
             phpCAS::setFixedServiceURL(Config::get()->casServiceUrl);
