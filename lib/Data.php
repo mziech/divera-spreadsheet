@@ -11,6 +11,7 @@ class Data {
     const PATH = __DIR__ . '/../data';
     private $all;
     private $events;
+    private $timestamp;
 
     /**
      * @return mixed
@@ -41,6 +42,10 @@ class Data {
         return date('Y-m-d', $item['start']) . ' ' . $item['title'];
     }
 
+    public function getTimestamp() {
+        return $this->timestamp;
+    }
+
     private static function getOrUpdate($filename, \DateInterval $maxAge, callable $loader) {
         $path = self::PATH . "/$filename";
         $deadline = new \DateTime();
@@ -63,6 +68,7 @@ class Data {
         $data->events = self::getOrUpdate("events.json", new \DateInterval("PT10M"), function () {
             return DiveraApi::get()->getEvents();
         });
+        $data->timestamp = filemtime(self::PATH . "/events.json");
         return $data;
     }
 

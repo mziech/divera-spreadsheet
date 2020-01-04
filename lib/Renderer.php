@@ -18,15 +18,14 @@ class Renderer {
 
     public function __construct() {
         $this->event = $_GET["event"];
-        $this->data = Data::get();
         $this->authentication = Authentication::get();
+        $this->data = Data::get();
     }
 
     private function createSpreadsheet($xlsxLinks=true) {
         $sheetBuilder = new SheetBuilder(
-            $this->data->getAll(),
             $this->data->getEvents($this->event),
-            $xlsxLinks
+            $xlsxLinks && !$this->authentication->getDashboard()
         );
 
         $rows = $sheetBuilder->build();
@@ -62,7 +61,11 @@ class Renderer {
             }
             $rowIndex++;
         }
-        $worksheet->getAutoFilter()->setRange("A1:{$lastColumn}1");
+        $worksheet->getAutoFilter()->setRange("A2:{$lastColumn}2");
+        for ($col = 'A'; $col <= 'C'; $col++) {
+            $worksheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        $worksheet->calculateColumnWidths();
 
         return $spreadsheet;
     }

@@ -4,18 +4,19 @@ namespace DiveraSpreadSheet;
 
 class SheetBuilder {
 
+    private $data;
     private $all;
     private $events;
     private $xlsxLinks;
 
     /**
      * SheetBuilder constructor.
-     * @param $all
      * @param $events
      * @param $xlsxLinks
      */
-    public function __construct($all, $events, $xlsxLinks) {
-        $this->all = $all;
+    public function __construct($events, $xlsxLinks) {
+        $this->data = Data::get();
+        $this->all = $this->data->getAll();
         $this->events = $events;
         $this->xlsxLinks = $xlsxLinks;
     }
@@ -99,10 +100,26 @@ class SheetBuilder {
         $rows = [];
 
         $rows[] = array_merge([
-            SheetCell::text("Name")->setUrl($this->xlsxLinks ? "xlsx.php" : null),
+            SheetCell::text(""),
+            SheetCell::text(date("d.m.Y H:i", $this->data->getTimestamp()))->setBg("#00ffff"),
+            SheetCell::text("BETA")->setBg("#00ff00")->setCenter(true),
+        ], $this->getEventBlanks());
+
+        $rows[] = array_merge([
+            SheetCell::text("Nr"),
+            SheetCell::text("Name"),
             SheetCell::text("Gruppe"),
         ], $this->getEventHeaders());
 
+        if ($this->xlsxLinks) {
+            $rows[] = array_merge([
+                SheetCell::text(""),
+                SheetCell::text("💾 Alle in Excel")->setUrl($this->xlsxLinks ? "xlsx.php" : null),
+                SheetCell::text(""),
+            ], $this->getEventXlsxLinks());
+        }
+
+        $nr = 1;
         foreach ($this->getSortedUcrs() as $ucr) {
             $user = $this->all["data"]["cluster"]["consumer"][$ucr];
             $nameCell = SheetCell::text($user["stdformat_name"]);
@@ -113,6 +130,7 @@ class SheetBuilder {
             }
 
             $rows[] = array_merge([
+                SheetCell::text($nr++)->setCenter(true),
                 $nameCell,
                 $groupCell,
             ], $this->getEventCells($ucr));
@@ -122,12 +140,21 @@ class SheetBuilder {
 
     private function getEventHeaders() {
         return array_map(function ($event) {
-            $cell = SheetCell::text($this->getEventTime($event) . "\r\n\r\n" . $event["title"])
+            return SheetCell::text($this->getEventTime($event) . "\r\n\r\n" . $event["title"])
                 ->setCenter(true)->setWrap(true);
-            if ($this->xlsxLinks) {
-                $cell->setUrl("xlsx.php?event=" . $event["id"]);
-            }
-            return $cell;
+        }, array_values($this->events["data"]["items"]));
+    }
+
+    private function getEventXlsxLinks() {
+        return array_map(function ($event) {
+            return SheetCell::text("💾 Excel")
+                ->setUrl("xlsx.php?event=" . $event["id"]);
+        }, array_values($this->events["data"]["items"]));
+    }
+
+    private function getEventBlanks() {
+        return array_map(function ($event) {
+            return SheetCell::text("");
         }, array_values($this->events["data"]["items"]));
     }
 
@@ -154,9 +181,9 @@ class SheetBuilder {
             if ($startDay !== $endDay) {
                 return "$startDay $startTime - $endDay $endTime";
             } else if ($startTime !== $endTime) {
-                return "$startDay $startTime - $endTime";
+                return "$startDay\r\n$startTime - $endTime";
             } else {
-                return "$startDay $startTime";
+                return "$startDay\r\n$startTime";
             }
         }
     }

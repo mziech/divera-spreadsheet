@@ -26,6 +26,44 @@ class Authentication {
         $this->dashboard = $dashboard;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getUser() {
+        return $this->user;
+    }
+
+    /**
+     * @return bool|bool
+     */
+    public function getDashboard() {
+        return $this->dashboard;
+    }
+
+    public static function generateDashboardCookie() {
+        $authentication = self::get();
+        if ($authentication->dashboard !== false) {
+            return false;
+        }
+
+        $payload = [
+            'user' => $authentication->user,
+            'timestamp' => date('c'),
+        ];
+
+        $token = '';
+        for ($i = 0; $i < 10; $i++) {
+            if ($i > 0) {
+                $token .= '-';
+            }
+            $token .= strtoupper(bin2hex(random_bytes(2)));
+        }
+        $dashboards = json_decode(file_get_contents(__DIR__ . "/../data/dashboards.json"), true);
+        $dashboards[$token] = $payload;
+        file_put_contents(__DIR__ . "/../data/dashboards.json", json_encode($dashboards));
+        return $token;
+    }
+
     public static function setDashboardCookie($token) {
         setcookie(self::DASHBOARD_COOKIE, $token, -1);
     }

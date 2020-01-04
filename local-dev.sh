@@ -12,4 +12,4 @@ if [ composer.json -nt vendor ]; then
 fi
 
 docker build -t local-divera-spreadsheet .
-docker run -v "`pwd`":/app -p 8012:80 local-divera-spreadsheet
+docker run -v "`pwd`":/app -v "`pwd`/data":/app/data -p 8012:80 local-divera-spreadsheet

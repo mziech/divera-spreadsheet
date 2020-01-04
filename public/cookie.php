@@ -1,6 +1,11 @@
 <?php
 include __DIR__. '/../vendor/autoload.php';
-// \DiveraSpreadSheet\Authentication::setDashboardCookie();
+if ($_POST['action'] === 'set') {
+    \DiveraSpreadSheet\Authentication::setDashboardCookie($_POST['token']);
+} else if ($_POST['action'] === 'generate') {
+    $token = \DiveraSpreadSheet\Authentication::generateDashboardCookie();
+}
+
 ?>
 <!doctype html>
 <html lang="de">
@@ -15,6 +20,12 @@ include __DIR__. '/../vendor/autoload.php';
 
 <h1>Dashboard Cookie</h1>
 
+<?php
+    if ($_POST['action'] === 'set') {
+        echo '<p>Dashboard cookie set</p>';
+    }
+?>
+
 <form action="" method="post">
     <p>Set cookie value:</p>
     <label for="token">
@@ -25,11 +36,15 @@ include __DIR__. '/../vendor/autoload.php';
     <button type="submit">Set</button>
 </form>
 
-<form action="" method="post">
+<?php
+if ($_POST['action'] === 'generate') {
+    echo "<p>Generated dashboard token: $token</p>";
+}
+?>
 
-    <input type="hidden" name="action" value="set">
-    <input id="token" type="text" name="token" value="<?php echo htmlentities(\DiveraSpreadSheet\Authentication::getDashboardCookie()); ?>">
-    <button type="submit">Set</button>
+<form action="" method="post">
+    <input type="hidden" name="action" value="generate">
+    <button type="submit">Generate</button>
 </form>
 
 </body>
