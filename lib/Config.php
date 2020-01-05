@@ -26,6 +26,8 @@ class Config {
 
     public $eventsAccessKey = '';
 
+    public $timeZone = 'Europe/Berlin';
+
     private static function load() {
         $json = json_decode(file_get_contents(__DIR__ . '/../data/config.json'), true);
         $config = new Config();

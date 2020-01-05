@@ -32,7 +32,7 @@ if ($_POST['action'] === 'set') {
         Token:
     </label>
     <input type="hidden" name="action" value="set">
-    <input id="token" type="text" name="token" value="<?php echo htmlentities(\DiveraSpreadSheet\Authentication::getDashboardCookie()); ?>">
+    <input id="token" type="text" name="token" value="">
     <button type="submit">Set</button>
 </form>
 

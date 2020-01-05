@@ -17,6 +17,7 @@ class Renderer {
     private $authentication;
 
     public function __construct() {
+        date_default_timezone_set(Config::get()->timeZone);
         $this->event = $_GET["event"];
         $this->authentication = Authentication::get();
         $this->data = Data::get();
@@ -31,6 +32,7 @@ class Renderer {
         $rows = $sheetBuilder->build();
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet->getProperties()->setTitle($this->data->getEventName($this->event));
         $worksheet = $spreadsheet->getActiveSheet();
         $rowIndex = 1;
         $lastColumn = 'A';
