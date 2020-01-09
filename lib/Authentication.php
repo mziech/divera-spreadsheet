@@ -32,14 +32,41 @@ class Authentication {
 
     private $dashboard;
 
+    private $admin;
+
     /**
      * Authentication constructor.
      * @param $user
      * @param bool $dashboard
+     * @param bool $admin
      */
-    public function __construct($user, bool $dashboard) {
+    public function __construct($user, bool $dashboard, bool $admin) {
         $this->user = $user;
         $this->dashboard = $dashboard;
+        $this->admin = $admin;
+    }
+
+    /**
+     * @return mixed
+     */
+    private static function loadDashboards() {
+        return json_decode(file_get_contents(__DIR__ . "/../data/dashboards.json"), true);
+    }
+
+    /**
+     * @param $dashboards
+     */
+    private static function saveDashboards($dashboards) {
+        file_put_contents(__DIR__ . "/../data/dashboards.json", json_encode($dashboards));
+    }
+
+    public static function deleteDashboardToken($token) {
+        $authentication = self::get();
+        $dashboards = self::loadDashboards();
+        if ($dashboards[$token]['user'] === $authentication->getUser()) {
+            unset($dashboards[$token]);
+            self::saveDashboards($dashboards);
+        }
     }
 
     /**
@@ -56,14 +83,21 @@ class Authentication {
         return $this->dashboard;
     }
 
+    /**
+     * @return bool|bool
+     */
+    public function getAdmin() {
+        return $this->admin;
+    }
+
     public static function generateDashboardCookie() {
         $authentication = self::get();
-        if ($authentication->dashboard !== false) {
+        if (!$authentication->getAdmin()) {
             return false;
         }
 
         $payload = [
-            'user' => $authentication->user,
+            'user' => $authentication->getUser(),
             'timestamp' => date('c'),
         ];
 
@@ -74,10 +108,21 @@ class Authentication {
             }
             $token .= strtoupper(bin2hex(random_bytes(2)));
         }
-        $dashboards = json_decode(file_get_contents(__DIR__ . "/../data/dashboards.json"), true);
+        $dashboards = self::loadDashboards();
         $dashboards[$token] = $payload;
-        file_put_contents(__DIR__ . "/../data/dashboards.json", json_encode($dashboards));
+        self::saveDashboards($dashboards);
         return $token;
+    }
+
+    public static function getUserTokens() {
+        $authentication = self::get();
+        if ($authentication->getUser() === null) {
+            return [];
+        }
+
+        return array_filter(self::loadDashboards(), function ($it) use ($authentication) {
+            return array_key_exists('user', $it) && $it['user'] === $authentication->getUser();
+        });
     }
 
     public static function setDashboardCookie($token) {
@@ -98,7 +143,7 @@ class Authentication {
             return false;
         }
 
-        $dashboards = json_decode(file_get_contents(__DIR__ . "/../data/dashboards.json"));
+        $dashboards = self::loadDashboards();
         if (!array_key_exists($token, $dashboards)) {
             return false;
         }
@@ -108,11 +153,11 @@ class Authentication {
 
     private static function load() {
         if (self::isDashboard()) {
-            return new Authentication(null, true);
+            return new Authentication(null, true, false);
         }
 
-        phpCAS::setDebug();
-        phpCAS::setVerbose(true);
+        // phpCAS::setDebug(__DIR__ . '/../data/cas.log');
+        // phpCAS::setVerbose(true);
         $url = parse_url(Config::get()->casUrl);
         phpCAS::client(CAS_VERSION_3_0, $url['host'], $url['port'] !== null ? $url['port'] : 443, $url['path']);
         if ($url['scheme'] === 'http') {
@@ -126,7 +171,14 @@ class Authentication {
             phpCAS::setFixedServiceURL(Config::get()->casServiceUrl);
         }
         phpCAS::forceAuthentication();
-        return new Authentication(phpCAS::getUser(), false);
+        $memberOf = phpCAS::hasAttribute('memberOf') ? phpCAS::getAttribute('memberOf') : [];
+        if (!is_array($memberOf)) {
+            $memberOf = [$memberOf];
+        }
+        $admin = empty(Config::get()->casAdminGroups)
+            ? true
+            : !empty(array_intersect($memberOf, Config::get()->casAdminGroups));
+        return new Authentication(phpCAS::getUser(), false, $admin);
     }
 
     /**

@@ -18,10 +18,13 @@
  */
 
 include __DIR__. '/../vendor/autoload.php';
+$csrf = \DiveraSpreadSheet\Csrf::get()->check();
 if ($_POST['action'] === 'set') {
     \DiveraSpreadSheet\Authentication::setDashboardCookie($_POST['token']);
 } else if ($_POST['action'] === 'generate') {
     $token = \DiveraSpreadSheet\Authentication::generateDashboardCookie();
+} else if ($_POST['action'] === 'delete') {
+    $token = \DiveraSpreadSheet\Authentication::deleteDashboardToken($_POST['token']);
 }
 
 ?>
@@ -49,6 +52,7 @@ if ($_POST['action'] === 'set') {
     <label for="token">
         Token:
     </label>
+    <?php $csrf->input(); ?>
     <input type="hidden" name="action" value="set">
     <input id="token" type="text" name="token" value="">
     <button type="submit">Set</button>
@@ -56,14 +60,43 @@ if ($_POST['action'] === 'set') {
 
 <?php
 if ($_POST['action'] === 'generate') {
-    echo "<p>Generated dashboard token: $token</p>";
+    echo $token !== false
+        ? "<p>Generated dashboard token: $token</p>"
+        : "<p>You are not allowed to generate dashboard tokens!</p>";
 }
 ?>
 
 <form action="" method="post">
+    <?php $csrf->input(); ?>
     <input type="hidden" name="action" value="generate">
     <button type="submit">Generate</button>
 </form>
+
+<h2>My Tokens</h2>
+<?php
+if ($_GET['list'] === '1') {
+    foreach (\DiveraSpreadSheet\Authentication::getUserTokens() as $token => $payload) {
+        ?>
+        <div>
+            <form action="" method="post">
+                <?php $csrf->input(); ?>
+                <input type="hidden" name="action" value="delete">
+                <input type="text" readonly="readonly" name="token" value="<?php echo htmlspecialchars($token); ?>">
+                from <?php echo htmlspecialchars($payload['timestamp']); ?>
+                <button type="submit">Delete</button>
+            </form>
+        </div>
+        <?php
+    }
+} else {
+    ?>
+    <form action="" method="get">
+        <input type="hidden" name="list" value="1">
+        <button type="submit">Show</button>
+    </form>
+    <?php
+}
+?>
 
 </body>
 </html>

@@ -19,54 +19,42 @@
 
 namespace DiveraSpreadSheet;
 
-class Config {
 
-    private static $instance  = null;
+class Csrf {
 
-    public $casUrl = '';
+    private static $instance = null;
 
-    public $casServiceUrl = null;
-
-    public $casAdminGroups = [];
-
-    public $notAddressedBg = '#333333';
-
-    public $responseTypes = [];
-
-    public $users = [];
-
-    public $groups = [];
-
-    public $qualificationRanking = [];
-
-    public $defaultTitle = 'Helferliste';
-
-    public $allAccessKey = '';
-
-    public $eventsAccessKey = '';
-
-    public $timeZone = 'Europe/Berlin';
-
-    private static function load() {
-        $json = json_decode(file_get_contents(__DIR__ . '/../data/config.json'), true);
-        $config = new Config();
-        $vars = array_keys(get_class_vars(Config::class));
-        foreach ($json as $k => $v) {
-            if (!in_array($k, $vars)) {
-                continue;
-            }
-
-            $config->$k = $v;
+    public function getToken() {
+        session_start();
+        if (!array_key_exists('csrf', $_SESSION)) {
+            $_SESSION['csrf'] = bin2hex(random_bytes(20));
         }
-        return $config;
+        return $_SESSION['csrf'];
+    }
+
+    public function check() {
+        $token = $this->getToken();
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            return $this;
+        }
+
+        if ($token !== $_REQUEST['_csrf']) {
+            throw new \RuntimeException('CSRF check failed!');
+        }
+
+        return $this;
+    }
+
+    public function input() {
+        echo '<input type="hidden" name="_csrf" value="' . htmlspecialchars($this->getToken()) . '">';
     }
 
     /**
-     * @return Config
+     * @return Csrf
      */
     public static function get() {
         if (self::$instance === null) {
-            self::$instance = self::load();
+            self::$instance = new Csrf();
         }
         return self::$instance;
     }

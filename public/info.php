@@ -28,9 +28,11 @@ $authentication = \DiveraSpreadSheet\Authentication::get();
 <body>
 <pre>
 <?php
-print_r(date_default_timezone_get());
+print_r(ini_get("session.gc_maxlifetime"));
 echo("<br>");
 print_r($authentication);
+echo("<br>");
+print_r(phpCAS::getAttributes());
 ?>
 </pre>
 
