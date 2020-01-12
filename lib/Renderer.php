@@ -73,6 +73,9 @@ class Renderer {
                 if ($cell->getUrl()) {
                     $c->getHyperlink()->setUrl($cell->getUrl());
                 }
+                if ($cell->getComment()) {
+                    $text = $worksheet->getComment($c->getCoordinate())->getText()->createText($cell->getComment());
+                }
                 if ($rowIndex == 1) {
                     $lastColumn = $c->getColumn();
                 }
@@ -98,7 +101,6 @@ class Renderer {
             ->setRight(0.0);
         $html = new \PhpOffice\PhpSpreadsheet\Writer\Html($spreadsheet);
         $html->setUseEmbeddedCSS(true);
-        $html->setUseInlineCss(true);
         $html->save("php://output");
     }
 

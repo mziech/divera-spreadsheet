@@ -214,6 +214,12 @@ class SheetBuilder {
                 $cell->setBg(Config::get()->notAddressedBg);
             }
 
+            foreach ($event["participationnotes"] as $note) {
+                if ($note["id"] === $ucr) {
+                    $cell->setComment($note["note"] . PHP_EOL . PHP_EOL . date("d.m.Y H:i", $note["ts"]));
+                }
+            }
+
             foreach ($event["participationlist"] as $answer => $ucrs) {
                 if (in_array($ucr, $ucrs)) {
                     $responseType = Config::get()->responseTypes[$answer];

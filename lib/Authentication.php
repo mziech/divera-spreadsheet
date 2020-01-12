@@ -50,6 +50,10 @@ class Authentication {
      * @return mixed
      */
     private static function loadDashboards() {
+        if (!file_exists(__DIR__ . "/../data/dashboards.json")) {
+            return [];
+        }
+
         return json_decode(file_get_contents(__DIR__ . "/../data/dashboards.json"), true);
     }
 
