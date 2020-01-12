@@ -130,7 +130,7 @@ class Authentication {
     }
 
     public static function setDashboardCookie($token) {
-        setcookie(self::DASHBOARD_COOKIE, $token, -1);
+        setcookie(self::DASHBOARD_COOKIE, $token, time()+60*60*24*365*10, "", "", $_SERVER['HTTPS'], true);
     }
 
     public static function getDashboardCookie() {
