@@ -88,6 +88,8 @@ class Renderer {
             $worksheet->getColumnDimension($col)->setAutoSize(true);
         }
         $worksheet->calculateColumnWidths();
+        $worksheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 2);
+        $worksheet->freezePaneByColumnAndRow(4, 3);
 
         return $spreadsheet;
     }
@@ -99,7 +101,7 @@ class Renderer {
             ->setBottom(0.0)
             ->setLeft(0.0)
             ->setRight(0.0);
-        $html = new \PhpOffice\PhpSpreadsheet\Writer\Html($spreadsheet);
+        $html = new CustomHtml($spreadsheet);
         $html->setUseEmbeddedCSS(true);
         $html->save("php://output");
     }
