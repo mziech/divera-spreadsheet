@@ -121,12 +121,14 @@ class SheetBuilder {
             SheetCell::text(""),
             SheetCell::text(date("d.m.Y H:i", $this->data->getTimestamp()))->setBg("#00ffff"),
             SheetCell::text("BETA")->setBg("#00ff00")->setCenter(true),
+            SheetCell::text(""),
         ], $this->getEventBlanks());
 
         $rows[] = array_merge([
             SheetCell::text("Nr"),
             SheetCell::text("Name"),
             SheetCell::text("Gruppe"),
+            SheetCell::text("Status"),
         ], $this->getEventHeaders());
 
         if ($this->xlsxLinks) {
@@ -134,8 +136,11 @@ class SheetBuilder {
                 SheetCell::text(""),
                 SheetCell::text("💾 Alle in Excel")->setUrl($this->xlsxLinks ? "xlsx.php" : null),
                 SheetCell::text(""),
+                SheetCell::text(""),
             ], $this->getEventXlsxLinks());
         }
+
+        $statusCells = $this->getStatusCells();
 
         $nr = 1;
         foreach ($this->getSortedUcrs() as $ucr) {
@@ -151,9 +156,26 @@ class SheetBuilder {
                 SheetCell::text($nr++)->setCenter(true),
                 $nameCell,
                 $groupCell,
+                array_key_exists($ucr, $statusCells) ? $statusCells[$ucr] : SheetCell::text("")
             ], $this->getEventCells($ucr));
         }
         return $rows;
+    }
+
+    private function getStatusCells() {
+        $statusCells = [];
+        foreach ($this->all["data"]["cluster"]["status"] as $id => $status) {
+            $statusCells[$id] = SheetCell::text($status["name"])->setBg('#' . $status["color_hex"]);
+        }
+
+        $ucrCells = [];
+        foreach ($this->all["data"]["monitor"]["3"] as $ucr => $monitor) {
+            if (array_key_exists($monitor["status"], $statusCells)) {
+                $ucrCells[$ucr] = $statusCells[$monitor["status"]];
+            }
+        }
+
+        return $ucrCells;
     }
 
     private function getEventHeaders() {
