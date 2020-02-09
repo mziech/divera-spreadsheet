@@ -52,7 +52,7 @@ class Renderer {
         $rows = $sheetBuilder->build();
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $spreadsheet->getProperties()->setTitle($this->data->getEventName($this->event));
+        $spreadsheet->getProperties()->setTitle($this->data->getFilename($this->alarm, $this->event));
         $worksheet = $spreadsheet->getActiveSheet();
         $rowIndex = 1;
         $lastColumn = 'A';
@@ -110,7 +110,7 @@ class Renderer {
     }
 
     public function xlsx() {
-        $title = preg_replace("/[^a-z0-9 -]/i", "", $this->data->getEventName($this->event));
+        $title = preg_replace("/[^a-z0-9 -]/i", "", $this->data->getFilename($this->alarm, $this->event));
         $xlsx = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($this->createSpreadsheet(false));
         header('Content-disposition: attachment; filename="'. $title .'.xlsx"');
         $xlsx->save("php://output");

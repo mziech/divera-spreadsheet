@@ -72,13 +72,18 @@ class Data {
         return $this->alarms;
     }
 
-    public function getEventName($event) {
-        if (!array_key_exists($event, $this->events["data"]["items"])) {
-            return Config::get()->defaultTitle;
+    public function getFilename($alarm, $event) {
+        if ($alarm !== null && array_key_exists($alarm, $this->alarms["data"]["items"])) {
+            $item = $this->alarms["data"]["items"][$alarm];
+            return date('Y-m-d', $item['date']) . ' ' . $item['title'];
         }
 
-        $item = $this->events["data"]["items"][$event];
-        return date('Y-m-d', $item['start']) . ' ' . $item['title'];
+        if ($event !== null && array_key_exists($event, $this->events["data"]["items"])) {
+            $item = $this->events["data"]["items"][$event];
+            return date('Y-m-d', $item['start']) . ' ' . $item['title'];
+        }
+
+        return Config::get()->defaultTitle;
     }
 
     public function getTimestamp() {
