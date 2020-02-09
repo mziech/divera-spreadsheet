@@ -45,6 +45,8 @@ class Config {
 
     public $eventsAccessKey = '';
 
+    public $statusLength = 2;
+
     public $timeZone = 'Europe/Berlin';
 
     private static function load() {

@@ -128,7 +128,7 @@ class SheetBuilder {
             SheetCell::text("Nr"),
             SheetCell::text("Name"),
             SheetCell::text("Gruppe"),
-            SheetCell::text("Status"),
+            SheetCell::text("Eigener Status"),
         ], $this->getEventHeaders());
 
         if ($this->xlsxLinks) {
@@ -165,7 +165,9 @@ class SheetBuilder {
     private function getStatusCells() {
         $statusCells = [];
         foreach ($this->all["data"]["cluster"]["status"] as $id => $status) {
-            $statusCells[$id] = SheetCell::text($status["name"])->setBg('#' . $status["color_hex"]);
+            $statusCells[$id] = SheetCell::text(substr($status["name"], 0, Config::get()->statusLength))
+                ->setBg('#' . $status["color_hex"])
+                ->setCenter(true);
         }
 
         $ucrCells = [];
