@@ -26,6 +26,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class Renderer {
 
+    private $alarm;
     private $event;
     private $data;
     /**
@@ -43,8 +44,8 @@ class Renderer {
 
     private function createSpreadsheet($xlsxLinks=true) {
         $sheetBuilder = new SheetBuilder(
-            $this->data->getAlarms($this->alarm),
-            $this->data->getEvents($this->event),
+            $this->data->getAlarms($this->alarm, $this->event),
+            $this->data->getEvents($this->alarm, $this->event),
             $xlsxLinks && !$this->authentication->getDashboard()
         );
 

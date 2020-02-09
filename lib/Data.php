@@ -41,7 +41,11 @@ class Data {
     /**
      * @return mixed
      */
-    public function getEvents($event) {
+    public function getEvents($alarm, $event) {
+        if ($alarm !== null) {
+            return ["data" => [ "items" => []]];
+        }
+
         if ($event !== null && array_key_exists($event, $this->events["data"]["items"])) {
             return ["data" => [ "items" => [
                 $event => $this->events["data"]["items"][$event]
@@ -54,7 +58,11 @@ class Data {
     /**
      * @return mixed
      */
-    public function getAlarms($alarm) {
+    public function getAlarms($alarm, $event) {
+        if ($event !== null) {
+            return ["data" => [ "items" => []]];
+        }
+
         if ($alarm !== null && array_key_exists($alarm, $this->alarms["data"]["items"])) {
             return ["data" => [ "items" => [
                 $alarm => $this->alarms["data"]["items"][$alarm]
