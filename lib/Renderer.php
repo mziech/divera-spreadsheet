@@ -35,6 +35,7 @@ class Renderer {
 
     public function __construct() {
         date_default_timezone_set(Config::get()->timeZone);
+        $this->alarm = $_GET["alarm"];
         $this->event = $_GET["event"];
         $this->authentication = Authentication::get();
         $this->data = Data::get();
@@ -42,6 +43,7 @@ class Renderer {
 
     private function createSpreadsheet($xlsxLinks=true) {
         $sheetBuilder = new SheetBuilder(
+            $this->data->getAlarms($this->alarm),
             $this->data->getEvents($this->event),
             $xlsxLinks && !$this->authentication->getDashboard()
         );

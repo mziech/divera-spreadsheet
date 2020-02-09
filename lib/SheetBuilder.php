@@ -24,6 +24,7 @@ class SheetBuilder {
 
     private $data;
     private $all;
+    private $alarms;
     private $events;
     private $xlsxLinks;
 
@@ -32,9 +33,10 @@ class SheetBuilder {
      * @param $events
      * @param $xlsxLinks
      */
-    public function __construct($events, $xlsxLinks) {
+    public function __construct($alarms, $events, $xlsxLinks) {
         $this->data = Data::get();
         $this->all = $this->data->getAll();
+        $this->alarms = $alarms;
         $this->events = $events;
         $this->xlsxLinks = $xlsxLinks;
     }
@@ -118,18 +120,18 @@ class SheetBuilder {
         $rows = [];
 
         $rows[] = array_merge([
-            SheetCell::text(""),
+            Authentication::get()->getAdmin() ? SheetCell::text("↻")->setUrl("refresh.php") : SheetCell::text(""),
             SheetCell::text(date("d.m.Y H:i", $this->data->getTimestamp()))->setBg("#00ffff"),
             SheetCell::text("BETA")->setBg("#00ff00")->setCenter(true),
             SheetCell::text(""),
-        ], $this->getEventBlanks());
+        ], $this->getAlarmBlanks(), $this->getEventBlanks());
 
         $rows[] = array_merge([
             SheetCell::text("Nr"),
             SheetCell::text("Name"),
             SheetCell::text("Gruppe"),
             SheetCell::text("Eigener Status"),
-        ], $this->getEventHeaders());
+        ], $this->getAlarmHeaders(), $this->getEventHeaders());
 
         if ($this->xlsxLinks) {
             $rows[] = array_merge([
@@ -137,10 +139,11 @@ class SheetBuilder {
                 SheetCell::text("💾 Alle in Excel")->setUrl($this->xlsxLinks ? "xlsx.php" : null),
                 SheetCell::text(""),
                 SheetCell::text(""),
-            ], $this->getEventXlsxLinks());
+            ], $this->getAlarmXlsxLinks(), $this->getEventXlsxLinks());
         }
 
-        $statusCells = $this->getStatusCells();
+        $monitorStatusCells = $this->getMonitorStatusCells();
+        $alarmStatusCells = $this->getAlarmStatusCells();
 
         $nr = 1;
         foreach ($this->getSortedUcrs() as $ucr) {
@@ -156,13 +159,13 @@ class SheetBuilder {
                 SheetCell::text($nr++)->setCenter(true),
                 $nameCell,
                 $groupCell,
-                array_key_exists($ucr, $statusCells) ? $statusCells[$ucr] : SheetCell::text("")
-            ], $this->getEventCells($ucr));
+                array_key_exists($ucr, $monitorStatusCells) ? $monitorStatusCells[$ucr] : SheetCell::text("")
+            ], $this->getAlarmCells($ucr, $alarmStatusCells), $this->getEventCells($ucr));
         }
         return $rows;
     }
 
-    private function getStatusCells() {
+    private function getMonitorStatusCells() {
         $statusCells = [];
         foreach ($this->all["data"]["cluster"]["status"] as $id => $status) {
             $statusCells[$id] = SheetCell::text(substr($status["name"], 0, Config::get()->statusLength))
@@ -170,14 +173,45 @@ class SheetBuilder {
                 ->setCenter(true);
         }
 
-        $ucrCells = [];
+        $monitorCells = [];
         foreach ($this->all["data"]["monitor"]["3"] as $ucr => $monitor) {
             if (array_key_exists($monitor["status"], $statusCells)) {
-                $ucrCells[$ucr] = $statusCells[$monitor["status"]];
+                $monitorCells[$ucr] = $statusCells[$monitor["status"]];
             }
         }
 
-        return $ucrCells;
+        return $monitorCells;
+    }
+
+    private function getAlarmStatusCells() {
+        $statuses = $this->all["data"]["cluster"]["status"];
+
+        $zone = new \DateTimeZone(Config::get()->timeZone);
+        $alarmCells = [];
+        foreach ($this->alarms["data"]["items"] as $id => $alarm) {
+            $alarmCells[$id] = [];
+            foreach ($this->alarms["data"]["items"][$id]["ucr_answered"] as $status_id => $ucrs) {
+                if (array_key_exists($status_id, $statuses)) {
+                    $status = $statuses[$status_id];
+                    $duration = $status["time"] > 0 ? new \DateInterval("PT" . $status["time"] . "M") : null;
+                    foreach ($ucrs as $ucr => $item) {
+                        $ts = new \DateTime('@' . $item["ts"]);
+                        $ts->setTimezone($zone);
+                        $alarmCells[$id][$ucr] = SheetCell::text(substr($status["name"], 0, Config::get()->statusLength))
+                            ->setBg('#' . $status["color_hex"])
+                            ->setComment(trim("{$item["note"]}\r\n\r\nStatus: {$status["name"]}\r\nGesetzt um: " . $ts->format("d.m.Y H:i")))
+                            ->setCenter(true);
+
+                        if ($duration !== null) {
+                            $ts->add($duration);
+                            $alarmCells[$id][$ucr]->setText("⇥ " . $ts->format("H:i"));
+                        }
+                    }
+                }
+            }
+        }
+
+        return $alarmCells;
     }
 
     private function getEventHeaders() {
@@ -201,7 +235,7 @@ class SheetBuilder {
     }
 
     private function getEventTime($event) {
-        $zone = new \DateTimeZone("Europe/Berlin");
+        $zone = new \DateTimeZone(Config::get()->timeZone);
         $start = new \DateTime('@' . $event["start"]);
         $end = new \DateTime('@' . $event["end"]);
         $start->setTimezone($zone);
@@ -253,6 +287,49 @@ class SheetBuilder {
 
             return $cell;
         }, array_values($this->events["data"]["items"]));
+    }
+
+    private function getAlarmBlanks() {
+        return array_map(function ($event) {
+            return SheetCell::text("");
+        }, array_values($this->alarms["data"]["items"]));
+    }
+
+    private function getAlarmHeaders() {
+        return array_map(function ($alarm) {
+            $zone = new \DateTimeZone(Config::get()->timeZone);
+            $time = new \DateTime('@' . $alarm["date"]);
+            $time->setTimezone($zone);
+            return SheetCell::text($time->format("d.m.Y H:i") . "\r\n\r\n" . $alarm["title"])
+                ->setCenter(true)->setBg("#ffaaaa")->setWrap(true);
+        }, array_values($this->alarms["data"]["items"]));
+    }
+
+    private function getAlarmXlsxLinks() {
+        return array_map(function ($alarm) {
+            return SheetCell::text("💾 Excel")
+                ->setUrl("xlsx.php?alarm=" . $alarm["id"]);
+        }, array_values($this->alarms["data"]["items"]));
+    }
+
+    private function getAlarmCells($ucr, $alarmStatusCells) {
+        return array_map(function ($alarm) use ($alarmStatusCells, $ucr) {
+            if (array_key_exists($ucr, $alarmStatusCells[$alarm["id"]])) {
+                return $alarmStatusCells[$alarm["id"]][$ucr];
+            }
+
+            $cell = new SheetCell();
+            $cell->setCenter(true);
+            if (!in_array($ucr, $alarm["ucr_addressed"])) {
+                $cell->setBg(Config::get()->notAddressedBg);
+            }
+
+            if (in_array($ucr, $alarm["ucr_read"])) {
+                $cell->setText("👀");
+            }
+
+            return $cell;
+        }, array_values($this->alarms["data"]["items"]));
     }
 
 }

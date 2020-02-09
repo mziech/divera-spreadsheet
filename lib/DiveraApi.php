@@ -36,6 +36,11 @@ class DiveraApi {
         return file_get_contents("{$this->baseUrl}/events?accesskey=$key");
     }
 
+    public function getAlarms() {
+        $key = urlencode(Config::get()->eventsAccessKey);
+        return file_get_contents("{$this->baseUrl}/alarms?accesskey=$key");
+    }
+
     /**
      * @return DiveraApi
      */

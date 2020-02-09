@@ -28,6 +28,7 @@ class Data {
     const PATH = __DIR__ . '/../data';
     private $all;
     private $events;
+    private $alarms;
     private $timestamp;
 
     /**
@@ -50,6 +51,19 @@ class Data {
         return $this->events;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getAlarms($alarm) {
+        if ($alarm !== null && array_key_exists($alarm, $this->alarms["data"]["items"])) {
+            return ["data" => [ "items" => [
+                $alarm => $this->alarms["data"]["items"][$alarm]
+            ]]];
+        }
+
+        return $this->alarms;
+    }
+
     public function getEventName($event) {
         if (!array_key_exists($event, $this->events["data"]["items"])) {
             return Config::get()->defaultTitle;
@@ -67,7 +81,7 @@ class Data {
         $path = self::PATH . "/$filename";
         $deadline = new \DateTime();
         $deadline->sub($maxAge);
-        $mtime = filemtime($path);
+        $mtime = @filemtime($path);
         if ($mtime === false || $mtime < $deadline->getTimestamp()) {
             $newData = @$loader();
             if ($newData !== false) {
@@ -75,6 +89,16 @@ class Data {
             }
         }
         return json_decode(file_get_contents($path), true);
+    }
+
+    public static function refresh() {
+        if (!Authentication::get()->getAdmin()) {
+            throw new \RuntimeException("You are not allowed to trigger a refresh!");
+        }
+
+        file_put_contents(self::PATH . "/all.json", DiveraApi::get()->getAll());
+        file_put_contents(self::PATH . "/events.json", DiveraApi::get()->getEvents());
+        file_put_contents(self::PATH . "/alarms.json", DiveraApi::get()->getAlarms());
     }
 
     private static function load() {
@@ -85,7 +109,13 @@ class Data {
         $data->events = self::getOrUpdate("events.json", new \DateInterval("PT10M"), function () {
             return DiveraApi::get()->getEvents();
         });
-        $data->timestamp = filemtime(self::PATH . "/events.json");
+        $data->alarms = self::getOrUpdate("alarms.json", new \DateInterval("PT10M"), function () {
+            return DiveraApi::get()->getAlarms();
+        });
+        $data->timestamp = max(
+            filemtime(self::PATH . "/events.json"),
+            filemtime(self::PATH . "/alarms.json")
+        );
         return $data;
     }
 
