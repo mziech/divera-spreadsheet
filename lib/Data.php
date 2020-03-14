@@ -116,7 +116,7 @@ class Data {
 
     private static function load() {
         $data = new Data();
-        $data->all = self::getOrUpdate("all.json", new \DateInterval("P1D"), function () {
+        $data->all = self::getOrUpdate("all.json", new \DateInterval("PT60M"), function () {
             return DiveraApi::get()->getAll();
         });
         $data->events = self::getOrUpdate("events.json", new \DateInterval("PT10M"), function () {

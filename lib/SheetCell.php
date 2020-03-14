@@ -32,6 +32,17 @@ class SheetCell {
         return (new SheetCell())->setText($text);
     }
 
+    public static function copy(SheetCell $other) {
+        $cell = new SheetCell();
+        $cell->text = $other->text;
+        $cell->bg = $other->bg;
+        $cell->comment = $other->comment;
+        $cell->center = $other->center;
+        $cell->wrap = $other->wrap;
+        $cell->url = $other->url;
+        return $cell;
+    }
+
     /**
      * @return mixed
      */

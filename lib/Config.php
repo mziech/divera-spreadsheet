@@ -47,6 +47,10 @@ class Config {
 
     public $statusLength = 2;
 
+    public $statusOutdatedInterval = 'P7D';
+
+    public $statusOutdatedColor = '#CCCCCC';
+
     public $timeZone = 'Europe/Berlin';
 
     private static function load() {

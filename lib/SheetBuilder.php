@@ -173,10 +173,15 @@ class SheetBuilder {
                 ->setCenter(true);
         }
 
+        $deadline = (new \DateTimeImmutable())->sub(new \DateInterval(Config::get()->statusOutdatedInterval))->getTimestamp();
         $monitorCells = [];
         foreach ($this->all["data"]["monitor"]["3"] as $ucr => $monitor) {
             if (array_key_exists($monitor["status"], $statusCells)) {
-                $monitorCells[$ucr] = $statusCells[$monitor["status"]];
+                $monitorCells[$ucr] = SheetCell::copy($statusCells[$monitor["status"]])
+                    ->setComment("Status zuletzt aktualisiert am " . date("d.m.Y", $monitor["ts"]));
+                if ($monitor["ts"] < $deadline) {
+                    $monitorCells[$ucr]->setBg(Config::get()->statusOutdatedColor);
+                }
             }
         }
 
