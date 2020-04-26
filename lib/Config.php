@@ -37,6 +37,8 @@ class Config {
 
     public $groups = [];
 
+    public $excludeGroups = [];
+
     public $qualificationRanking = [];
 
     public $defaultTitle = 'Helferliste';

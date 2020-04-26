@@ -44,6 +44,10 @@ class SheetBuilder {
     private function getSortedUcrs() {
         $ucrToRank = [];
         foreach ($this->all["data"]["cluster"]["consumer"] as $ucr => $user) {
+            if (!empty(array_intersect($user["groups"], Config::get()->excludeGroups))) {
+                continue;
+            }
+
             $ucrToRank[$ucr] = [
                 $this->getGroupRank($user["groups"]),
                 $this->getUserRank($ucr, $user["qualifications"]),
