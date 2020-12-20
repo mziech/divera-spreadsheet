@@ -1,3 +1,5 @@
+![Docker](https://github.com/mziech/divera-spreadsheet/workflows/Docker/badge.svg)
+
 # divera-spreadsheet
 
 A small utility for converting [Divera 24/7](https://www.divera247.com/) API responses to an overview Matrix/Spreadsheet with XLSX download function.
