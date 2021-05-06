@@ -1,4 +1,4 @@
-FROM composer:1.9 as COMPOSER
+FROM composer:2 as COMPOSER
 
 ADD composer.* /app/
 RUN cd /app && composer install --ignore-platform-reqs

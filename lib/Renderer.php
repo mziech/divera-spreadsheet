@@ -35,6 +35,13 @@ class Renderer {
     private $authentication;
 
     public function __construct() {
+        // Workaround for https://github.com/ezyang/htmlpurifier/issues/71
+        $html_purifier_cache_dir = sys_get_temp_dir() . '/HTMLPurifier/DefinitionCache';
+        if (!is_dir($html_purifier_cache_dir)) {
+            mkdir($html_purifier_cache_dir, 0770, TRUE);
+        }
+        \HTMLPurifier_ConfigSchema::instance()->add('Cache.SerializerPath', $html_purifier_cache_dir, \HTMLPurifier_VarParser::C_STRING, true);
+
         date_default_timezone_set(Config::get()->timeZone);
         $this->alarm = $_GET["alarm"];
         $this->event = $_GET["event"];
