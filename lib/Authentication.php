@@ -177,7 +177,7 @@ class Authentication {
             $casServiceBaseUrl = 'http://' . $_SERVER['SERVER_NAME'] . ($_SERVER['SERVER_PORT'] == 80 ? ':' . $_SERVER['SERVER_PORT'] : '');
         }
         Logger::get(__CLASS__)->debug("CAS service base URL is: $casServiceBaseUrl");
-        phpCAS::client(CAS_VERSION_3_0, $url['host'], $url['port'] !== null ? $url['port'] : 443, $url['path'], $casServiceBaseUrl);
+        phpCAS::client(CAS_VERSION_3_0, $url['host'], $url['port'] ?? 443, $url['path'], $casServiceBaseUrl);
         if ($url['scheme'] === 'http') {
             phpCAS::setNoCasServerValidation();
             phpCAS::setServerLoginURL(Config::get()->casUrl . "/login?service=" . phpCAS::getServiceURL());
