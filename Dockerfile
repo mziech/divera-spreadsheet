@@ -3,7 +3,7 @@ FROM composer:2 as COMPOSER
 ADD composer.* /app/
 RUN cd /app && composer install --ignore-platform-reqs
 
-FROM php:7.4-apache
+FROM php:8.3-apache
 
 RUN apt-get update && apt-get install -y \
         libfreetype6-dev \
