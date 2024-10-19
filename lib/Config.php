@@ -55,6 +55,8 @@ class Config {
 
     public $timeZone = 'Europe/Berlin';
 
+    public $logLevel = 'Info';
+
     private static function load() {
         $json = json_decode(file_get_contents(__DIR__ . '/../data/config.json'), true);
         $config = new Config();

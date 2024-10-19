@@ -1,7 +1,7 @@
 <?php
 /*
  * divera-spreadsheet - A tool to format Divera API responses as a spreadsheet
- * Copyright © 2020 Marco Ziech (marco@ziech.net)
+ * Copyright © 2024 Marco Ziech (marco@ziech.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,18 +17,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 namespace DiveraSpreadSheet;
 
+use Monolog\Handler\StreamHandler;
+use Psr\Log\LoggerInterface;
 
-use PhpOffice\PhpSpreadsheet\Writer\Html;
+class Logger {
+    private static null|LoggerInterface $root = null;
+    private static array $loggers = [];
 
-class CustomHtml extends Html {
-
-    public function generateHTMLFooter(): string {
-        $coordinate = $this->spreadsheet->getActiveSheet()->getFreezePane();
-        return '<script type="text/javascript" src="freezepane.js" data-freezepane="' . htmlspecialchars($coordinate) .
-            '"></script>' . PHP_EOL . parent::generateHTMLFooter();
+    public static function get(string $name) : LoggerInterface {
+        if (self::$root === null) {
+            $logger = new \Monolog\Logger('Main');
+            $logger->pushHandler(new StreamHandler(__DIR__ . '/../data/application.log', Config::get()->logLevel));
+            self::$root = $logger;
+        }
+        if (!isset(self::$loggers[$name])) {
+            self::$loggers[$name] = self::$root->withName($name);
+        }
+        return self::$loggers[$name];
     }
-
 }

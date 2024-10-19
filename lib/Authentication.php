@@ -130,7 +130,7 @@ class Authentication {
     }
 
     public static function setDashboardCookie($token) {
-        setcookie(self::DASHBOARD_COOKIE, $token, time()+60*60*24*365*10, "", "", $_SERVER['HTTPS'], true);
+        setcookie(self::DASHBOARD_COOKIE, $token, time()+60*60*24*365*10, "", "", isset($_SERVER['HTTPS']), true);
     }
 
     public static function getDashboardCookie() {
@@ -156,14 +156,28 @@ class Authentication {
     }
 
     private static function load() {
+        global $_SERVER;
+
         if (self::isDashboard()) {
             return new Authentication(null, true, false);
         }
 
-        // phpCAS::setDebug(__DIR__ . '/../data/cas.log');
+        phpCAS::setLogger(Logger::get('CAS'));
         // phpCAS::setVerbose(true);
+
         $url = parse_url(Config::get()->casUrl);
-        phpCAS::client(CAS_VERSION_3_0, $url['host'], $url['port'] !== null ? $url['port'] : 443, $url['path']);
+        $casServiceUrl = Config::get()->casServiceUrl;
+        if ($casServiceUrl !== null) {
+            //$casServiceUrlParsed = parse_url($casServiceUrl);
+            //$casServiceBaseUrl = $casServiceUrlParsed['scheme'] . '://' . $casServiceUrlParsed['host'] . ($casServiceUrlParsed['port'] !== null ? ':' . $casServiceUrlParsed['port'] : '');
+            $casServiceBaseUrl = $casServiceUrl;
+        } else if ($_SERVER['HTTPS'] ?? false) {
+            $casServiceBaseUrl = 'https://' . $_SERVER['SERVER_NAME'] . ($_SERVER['SERVER_PORT'] == 443 ? ':' . $_SERVER['SERVER_PORT'] : '');
+        } else {
+            $casServiceBaseUrl = 'http://' . $_SERVER['SERVER_NAME'] . ($_SERVER['SERVER_PORT'] == 80 ? ':' . $_SERVER['SERVER_PORT'] : '');
+        }
+        Logger::get(__CLASS__)->debug("CAS service base URL is: $casServiceBaseUrl");
+        phpCAS::client(CAS_VERSION_3_0, $url['host'], $url['port'] !== null ? $url['port'] : 443, $url['path'], $casServiceBaseUrl);
         if ($url['scheme'] === 'http') {
             phpCAS::setNoCasServerValidation();
             phpCAS::setServerLoginURL(Config::get()->casUrl . "/login?service=" . phpCAS::getServiceURL());
@@ -171,7 +185,7 @@ class Authentication {
         } else {
             phpCAS::setCasServerCACert("/etc/ssl/certs/ca-certificates.crt");
         }
-        if (Config::get()->casServiceUrl !== null) {
+        if ($casServiceUrl !== null) {
             phpCAS::setFixedServiceURL(Config::get()->casServiceUrl);
         }
         phpCAS::forceAuthentication();

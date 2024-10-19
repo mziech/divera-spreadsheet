@@ -21,30 +21,24 @@
 namespace DiveraSpreadSheet;
 
 
+use PhpOffice\PhpSpreadsheet\Cell\CellAddress;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class Renderer {
 
-    private $alarm;
-    private $event;
-    private $data;
+    private null|string $alarm;
+    private null|string $event;
+    private Data $data;
     /**
      * @var Authentication
      */
     private $authentication;
 
     public function __construct() {
-        // Workaround for https://github.com/ezyang/htmlpurifier/issues/71
-        $html_purifier_cache_dir = sys_get_temp_dir() . '/HTMLPurifier/DefinitionCache';
-        if (!is_dir($html_purifier_cache_dir)) {
-            mkdir($html_purifier_cache_dir, 0770, TRUE);
-        }
-        \HTMLPurifier_ConfigSchema::instance()->add('Cache.SerializerPath', $html_purifier_cache_dir, \HTMLPurifier_VarParser::C_STRING, true);
-
         date_default_timezone_set(Config::get()->timeZone);
-        $this->alarm = $_GET["alarm"];
-        $this->event = $_GET["event"];
+        $this->alarm = $_GET["alarm"] ?? null;
+        $this->event = $_GET["event"] ?? null;
         $this->authentication = Authentication::get();
         $this->data = Data::get();
     }
@@ -67,7 +61,7 @@ class Renderer {
             $colIndex = 1;
             /** @var \DiveraSpreadSheet\SheetCell $cell */
             foreach ($row as $cell) {
-                $c = $worksheet->getCellByColumnAndRow($colIndex, $rowIndex);
+                $c = $worksheet->getCell(CellAddress::fromColumnAndRow($colIndex, $rowIndex));
                 $c->getStyle()->getBorders()->getAllBorders()->getColor()->setRGB("000000");
                 $c->getStyle()->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $c->getStyle()->getFont()->setName("Arial");
@@ -99,7 +93,7 @@ class Renderer {
         }
         $worksheet->calculateColumnWidths();
         $worksheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 2);
-        $worksheet->freezePaneByColumnAndRow(4, 3);
+        $worksheet->freezePane(CellAddress::fromColumnAndRow(4, 3));
 
         return $spreadsheet;
     }
@@ -112,7 +106,6 @@ class Renderer {
             ->setLeft(0.0)
             ->setRight(0.0);
         $html = new CustomHtml($spreadsheet);
-        $html->setUseEmbeddedCSS(true);
         $html->save("php://output");
     }
 

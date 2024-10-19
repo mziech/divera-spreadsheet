@@ -23,9 +23,13 @@ namespace DiveraSpreadSheet;
 class Csrf {
 
     private static $instance = null;
+    private bool $session_started = false;
 
     public function getToken() {
-        session_start();
+        if (!$this->session_started) {
+            session_start();
+            $this->session_started = true;
+        }
         if (!array_key_exists('csrf', $_SESSION)) {
             $_SESSION['csrf'] = bin2hex(random_bytes(20));
         }

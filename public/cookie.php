@@ -19,11 +19,12 @@
 
 include __DIR__. '/../vendor/autoload.php';
 $csrf = \DiveraSpreadSheet\Csrf::get()->check();
-if ($_POST['action'] === 'set') {
+$action = $_POST['action'] ?? '';
+if ($action === 'set') {
     \DiveraSpreadSheet\Authentication::setDashboardCookie($_POST['token']);
-} else if ($_POST['action'] === 'generate') {
+} else if ($action === 'generate') {
     $token = \DiveraSpreadSheet\Authentication::generateDashboardCookie();
-} else if ($_POST['action'] === 'delete') {
+} else if ($action === 'delete') {
     $token = \DiveraSpreadSheet\Authentication::deleteDashboardToken($_POST['token']);
 }
 
@@ -42,7 +43,7 @@ if ($_POST['action'] === 'set') {
 <h1>Dashboard Cookie</h1>
 
 <?php
-    if ($_POST['action'] === 'set') {
+    if ($action === 'set') {
         echo '<p>Dashboard cookie set</p>';
     }
 ?>
@@ -59,7 +60,7 @@ if ($_POST['action'] === 'set') {
 </form>
 
 <?php
-if ($_POST['action'] === 'generate') {
+if ($action === 'generate') {
     echo $token !== false
         ? "<p>Generated dashboard token: $token</p>"
         : "<p>You are not allowed to generate dashboard tokens!</p>";
@@ -74,7 +75,7 @@ if ($_POST['action'] === 'generate') {
 
 <h2>My Tokens</h2>
 <?php
-if ($_GET['list'] === '1') {
+if (isset($_GET['list']) && $_GET['list'] === '1') {
     foreach (\DiveraSpreadSheet\Authentication::getUserTokens() as $token => $payload) {
         ?>
         <div>
